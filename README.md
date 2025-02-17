@@ -29,3 +29,11 @@ services:
       LINKDING_API_PATH: https://your.linkding.instance/api
       LINKDING_TOKEN: YOUR_TOKEN
 ```
+
+### Development
+
+```shell
+cp .env.example .env
+```
+
+Then update the *.env* file with the right configuration.
