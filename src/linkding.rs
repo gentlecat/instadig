@@ -28,7 +28,7 @@ pub(crate) async fn add_to_linkding(url: &str) {
     map.insert("url".to_string(), Value::String(url.to_string()));
     map.insert(
         "tag_names".to_string(),
-        Value::Array(Vec::from([Value::String("Instapaper".to_string())])),
+        Value::Array(Vec::from([Value::String("from-instapaper".to_string())])),
     );
 
     println!("Adding URL: {}", url);
