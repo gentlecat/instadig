@@ -4,6 +4,7 @@ mod linkding;
 #[macro_use]
 extern crate lazy_static;
 
+use log::info;
 use reqwest::Url;
 use std::env;
 use std::time::Duration;
@@ -20,9 +21,12 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() {
+
+    env_logger::init();
+
     loop {
         let feed = instapaper::get_feed(&CONFIG.instapaper_feed).await;
-        println!("Current starred URLs: {:#?}", feed);
+        info!("Retrieved {} starred URLs", feed.len());
 
         for link in feed {
             if !linkding::exists_in_linkding(&link).await {
@@ -52,7 +56,7 @@ fn init_and_validate_config() -> Config {
         panic!("Please specify LINKDING_API_PATH without a trailing slash")
     }
 
-    return config;
+    config
 }
 
 fn get_env_var(env_var_name: &str) -> String {
@@ -63,5 +67,5 @@ fn get_env_var(env_var_name: &str) -> String {
         panic!("{}  env variable is empty", env_var_name)
     }
 
-    return env_var;
+    env_var
 }

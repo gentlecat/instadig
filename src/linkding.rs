@@ -1,3 +1,4 @@
+use log::info;
 use crate::CONFIG;
 use serde_json::{Map, Value};
 
@@ -20,7 +21,7 @@ pub(crate) async fn exists_in_linkding(url: &str) -> bool {
         .json::<LookupResponse>()
         .await;
 
-    return resp.unwrap().count > 0;
+    resp.unwrap().count > 0
 }
 
 pub(crate) async fn add_to_linkding(url: &str) {
@@ -31,7 +32,7 @@ pub(crate) async fn add_to_linkding(url: &str) {
         Value::Array(Vec::from([Value::String("from-instapaper".to_string())])),
     );
 
-    println!("Adding URL: {}", url);
+    info!("Adding URL: {}", url);
 
     let response = reqwest::Client::new()
         .post(format!("{}/bookmarks/", CONFIG.linkding_api_path))
@@ -39,5 +40,5 @@ pub(crate) async fn add_to_linkding(url: &str) {
         .json(&map)
         .send()
         .await;
-    println!("Response status: {}", response.unwrap().status())
+    info!("Response status: {}", response.unwrap().status())
 }
