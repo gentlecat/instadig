@@ -17,7 +17,6 @@ Before running the application you must define the following environment variabl
 ### Docker Compose
 
 ```yaml
-version: "3.8"
 services:
 
   instadig:
