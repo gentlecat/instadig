@@ -6,5 +6,5 @@ endif
 build:
 	cargo build
 
-run:
+run: build
 	RUST_LOG=INFO cargo run
