@@ -32,6 +32,7 @@ async fn main() {
             if !linkding::exists_in_linkding(&link).await {
                 linkding::add_to_linkding(&link).await;
             }
+            tokio::time::sleep(Duration::from_secs(1)).await;
         }
 
         tokio::time::sleep(Duration::from_secs(600)).await;
