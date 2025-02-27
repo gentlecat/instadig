@@ -5,6 +5,7 @@ mod linkding;
 extern crate lazy_static;
 
 use log::info;
+use env_logger::Env;
 use reqwest::Url;
 use std::env;
 use std::time::Duration;
@@ -22,7 +23,7 @@ lazy_static! {
 #[tokio::main]
 async fn main() {
 
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     loop {
         let feed = instapaper::get_feed(&CONFIG.instapaper_feed).await;

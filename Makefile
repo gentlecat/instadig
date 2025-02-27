@@ -7,4 +7,4 @@ build:
 	cargo build
 
 run: build
-	RUST_LOG=INFO cargo run
+	RUST_LOG=debug cargo run
