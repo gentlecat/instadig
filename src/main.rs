@@ -25,6 +25,9 @@ lazy_static! {
 async fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
+    // Initial sleep, in case the service is started together with Linkding, which takes a few seconds to start up.
+    tokio::time::sleep(Duration::from_secs(10)).await;
+
     loop {
         let feed = instapaper::get_feed(&CONFIG.instapaper_feed).await;
         debug!("Retrieved {} starred URLs from Instapaper", feed.len());
