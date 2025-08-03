@@ -1,0 +1,7 @@
+services:
+
+  instadig:
+    build: .
+    container_name: instadig
+    restart: unless-stopped
+    env_file: ".env"
