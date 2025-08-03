@@ -5,7 +5,7 @@ mod linkding;
 extern crate lazy_static;
 
 use env_logger::Env;
-use log::debug;
+use log::{debug, error};
 use reqwest::Url;
 use std::env;
 use std::time::Duration;
@@ -30,9 +30,20 @@ async fn main() {
         debug!("Retrieved {} starred URLs from Instapaper", feed.len());
 
         for link in feed {
-            if !linkding::exists_in_linkding(&link).await {
-                linkding::add_to_linkding(&link).await;
+            match linkding::exists_in_linkding(&link).await {
+                Ok(exists) => {
+                    if !exists {
+                        linkding::add_to_linkding(&link).await;
+                    }
+                }
+                Err(_) => {
+                    error!(
+                        "Failed to check if link {} exists in Linkding; skipping...",
+                        &link
+                    );
+                }
             }
+
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
 
