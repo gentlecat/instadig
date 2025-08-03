@@ -1,8 +1,9 @@
 use crate::CONFIG;
 use log::{debug, info};
+use reqwest::Error;
 use serde_json::{Map, Value};
 
-pub(crate) async fn exists_in_linkding(url: &str) -> bool {
+pub(crate) async fn exists_in_linkding(url: &str) -> Result<bool, Error> {
     #[derive(serde::Deserialize, Debug)]
     struct LookupResponse {
         count: u32,
@@ -16,12 +17,15 @@ pub(crate) async fn exists_in_linkding(url: &str) -> bool {
         ))
         .header("Authorization", format!("Token {}", CONFIG.linkding_token))
         .send()
-        .await
-        .unwrap()
+        .await?
         .json::<LookupResponse>()
         .await;
 
-    resp.unwrap().count > 0
+    if resp.is_err() {
+        return Err(resp.err().unwrap());
+    }
+
+    Ok(resp?.count > 0)
 }
 
 pub(crate) async fn add_to_linkding(url: &str) {
