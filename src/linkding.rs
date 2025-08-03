@@ -1,5 +1,5 @@
-use log::info;
 use crate::CONFIG;
+use log::{debug, info};
 use serde_json::{Map, Value};
 
 pub(crate) async fn exists_in_linkding(url: &str) -> bool {
@@ -29,7 +29,7 @@ pub(crate) async fn add_to_linkding(url: &str) {
     map.insert("url".to_string(), Value::String(url.to_string()));
     map.insert(
         "tag_names".to_string(),
-        Value::Array(Vec::from([Value::String("from-instapaper".to_string())])),
+        Value::Array(Vec::from([Value::String(CONFIG.linkding_tag.to_string())])),
     );
 
     info!("Adding URL: {}", url);
@@ -40,5 +40,5 @@ pub(crate) async fn add_to_linkding(url: &str) {
         .json(&map)
         .send()
         .await;
-    info!("Response status: {}", response.unwrap().status())
+    debug!("Response status: {}", response.unwrap().status())
 }

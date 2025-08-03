@@ -14,6 +14,10 @@ Before running the application you must define the following environment variabl
 * `LINKDING_API_PATH` – Full URL with `/api` endpoint of your Linkding instance (don't include the trailing slash).
 * `LINKDING_TOKEN` – Your authentication token for Linkding.
 
+You can also set this optional environment variable:
+
+* `LINKDING_TAG` – Custom tag to add for synced articles. Default: `from-instapaper`.
+
 ### Docker Compose
 
 ```yaml

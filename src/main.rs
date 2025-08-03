@@ -4,8 +4,8 @@ mod linkding;
 #[macro_use]
 extern crate lazy_static;
 
-use log::info;
 use env_logger::Env;
+use log::debug;
 use reqwest::Url;
 use std::env;
 use std::time::Duration;
@@ -14,6 +14,7 @@ pub struct Config {
     pub instapaper_feed: String,
     pub linkding_api_path: String,
     pub linkding_token: String,
+    pub linkding_tag: String,
 }
 
 lazy_static! {
@@ -22,12 +23,11 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() {
-
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     loop {
         let feed = instapaper::get_feed(&CONFIG.instapaper_feed).await;
-        info!("Retrieved {} starred URLs", feed.len());
+        debug!("Retrieved {} starred URLs from Instapaper", feed.len());
 
         for link in feed {
             if !linkding::exists_in_linkding(&link).await {
@@ -45,6 +45,7 @@ fn init_and_validate_config() -> Config {
         instapaper_feed: get_env_var("INSTAPAPER_FEED_URL"),
         linkding_api_path: get_env_var("LINKDING_API_PATH"),
         linkding_token: get_env_var("LINKDING_TOKEN"),
+        linkding_tag: get_env_var_default("LINKDING_TAG", "from-instapaper"),
     };
 
     if Url::parse(&*config.linkding_api_path).is_err() {
@@ -66,8 +67,21 @@ fn get_env_var(env_var_name: &str) -> String {
         env::var(env_var_name).expect(&*format!("{} env variable is undefined", env_var_name));
 
     if env_var.len() < 1 {
-        panic!("{}  env variable is empty", env_var_name)
+        panic!("{} env variable is empty", env_var_name)
     }
 
     env_var
+}
+
+fn get_env_var_default(env_var_name: &str, default: &str) -> String {
+    match env::var(env_var_name) {
+        Ok(val) if !val.is_empty() => val,
+        _ => {
+            debug!(
+                "{} env variable is undefined or empty; defaulting to {}",
+                env_var_name, default
+            );
+            default.to_string()
+        }
+    }
 }

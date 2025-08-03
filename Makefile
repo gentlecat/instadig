@@ -3,8 +3,11 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
-build:
+fmt:
+	cargo fmt
+
+build: fmt
 	cargo build
 
 run: build
-	RUST_LOG=debug cargo run
+	cargo run
