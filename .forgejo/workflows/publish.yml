@@ -48,7 +48,7 @@ jobs:
       # Builds on the runner's native architecture (no emulation).
       # On pull requests this builds but does not push (dry run).
       - name: Build and push (${{ matrix.arch }})
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: runtime
