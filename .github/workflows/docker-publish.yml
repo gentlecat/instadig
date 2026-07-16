@@ -3,24 +3,46 @@ name: Create and publish a Docker image
 on:
   push:
     branches: ['main']
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  pull_request:
 
 jobs:
 
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       packages: write
       contents: read
-      attestations: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+
+      - name: Determine target registries
+        id: target
+        shell: bash
+        env:
+          FORGEJO_DOMAIN: ${{ vars.FORGEJO_DOMAIN }}
+        run: |
+          repo="${GITHUB_REPOSITORY##*/}"
+          if [ "${GITHUB_SERVER_URL#https://}" = "github.com" ]; then
+            echo "platform=github" >> "$GITHUB_OUTPUT"
+            {
+              echo "images<<EOF"; echo "ghcr.io/${GITHUB_REPOSITORY}"; echo "EOF"
+              echo "tags<<EOF";   echo "ghcr.io/${GITHUB_REPOSITORY}:latest"; echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "platform=forgejo" >> "$GITHUB_OUTPUT"
+            {
+              echo "images<<EOF"
+              echo "${FORGEJO_DOMAIN}/${GITHUB_REPOSITORY_OWNER}/${repo}"
+              echo "codeberg.org/r1/${repo}"
+              echo "EOF"
+              echo "tags<<EOF"
+              echo "${FORGEJO_DOMAIN}/${GITHUB_REPOSITORY_OWNER}/${repo}:latest"
+              echo "codeberg.org/r1/${repo}:latest"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -28,26 +50,43 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to the Container registry
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request' && steps.target.outputs.platform == 'github'
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Log in to local Forgejo registry
+        if: github.event_name != 'pull_request' && steps.target.outputs.platform == 'forgejo'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.FORGEJO_DOMAIN }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Log in to Codeberg
+        if: github.event_name != 'pull_request' && steps.target.outputs.platform == 'forgejo'
+        uses: docker/login-action@v4
+        with:
+          registry: codeberg.org
+          username: r1
+          password: ${{ secrets.CODEBERG_TOKEN }}
+
+      - name: Extract metadata (labels) for Docker
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.target.outputs.images }}
 
       - name: Build and push Docker image
-        id: push
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
+          # On pull requests this builds but does not push (dry run).
+          push: ${{ github.event_name != 'pull_request' }}
           target: runtime
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.target.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
